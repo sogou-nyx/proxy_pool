@@ -40,25 +40,27 @@ class ProxyRefreshSchedule(ProxyManager):
         ProxyManager.__init__(self)
         self.log = LogHandler('refresh_schedule')
 
-    def validProxy(self):
+    def valid_raw_Proxy(self):
         """
         验证raw_proxy_queue中的代理, 将可用的代理放入useful_proxy_queue
         :return:
         """
         self.db.changeTable(self.raw_proxy_queue)
-        raw_proxy_item = self.db.pop()
+        raw_proxy_item = self.db.pop() #dict {"proxy:" proxy, "value:" value}
         self.log.info('ProxyRefreshSchedule: %s start validProxy' % time.ctime())
         # 计算剩余代理，用来减少重复计算
         remaining_proxies = self.getAll()
         while raw_proxy_item:
             raw_proxy = raw_proxy_item.get('proxy')
+            meta = raw_proxy_item.get('value')
             if isinstance(raw_proxy, bytes):
                 # 兼容Py3
                 raw_proxy = raw_proxy.decode('utf8')
 
             if (raw_proxy not in remaining_proxies) and validUsefulProxy(raw_proxy):
                 self.db.changeTable(self.useful_proxy_queue)
-                self.db.put(raw_proxy)
+                # self.db.put(raw_proxy, meta)
+                ProxyManager.add_proxy(raw_proxy, eval(meta))
                 self.log.info('ProxyRefreshSchedule: %s validation pass' % raw_proxy)
             else:
                 self.log.info('ProxyRefreshSchedule: %s validation fail' % raw_proxy)
@@ -70,11 +72,11 @@ class ProxyRefreshSchedule(ProxyManager):
 
 def refreshPool():
     pp = ProxyRefreshSchedule()
-    pp.validProxy()
+    pp.valid_raw_Proxy()
 
 
 def batchRefresh(process_num=30):
-    # 检验新代理
+    # 检验raw_proxy中存放的新抓取的代理
     pl = []
     for num in range(process_num):
         proc = Thread(target=refreshPool, args=())
@@ -89,19 +91,20 @@ def batchRefresh(process_num=30):
 
 
 def fetchAll():
-    p = ProxyRefreshSchedule()
     # 获取新代理
+    p = ProxyRefreshSchedule()
     p.refresh()
 
 
 def run():
     scheduler = BackgroundScheduler()
     # 不用太快, 网站更新速度比较慢, 太快会加大验证压力, 导致raw_proxy积压
-    scheduler.add_job(fetchAll,  'interval', minutes=10, id="fetch_proxy")
+    # scheduler.add_job(fetchAll,  'interval', minutes=5, id="fetch_proxy")
     scheduler.add_job(batchRefresh, "interval", minutes=1)  # 每分钟检查一次
     scheduler.start()
-
-    fetchAll()
+    """"单独启动一次，不然在调度器作用下会在10min后才第一次运行"""
+    # fetchAll()
+    batchRefresh()
 
     while True:
         time.sleep(3)

@@ -31,8 +31,9 @@ class ProxyValidSchedule(ProxyManager, object):
         ProxyManager.__init__(self)
         self.queue = Queue()
         self.proxy_item = dict()
+        self.check_urls = []
 
-    def __validProxy(self, threads=20):
+    def __valid_useful_Proxy(self, threads=20):
         """
         验证useful_proxy代理
         :param threads: 线程数
@@ -40,7 +41,7 @@ class ProxyValidSchedule(ProxyManager, object):
         """
         thread_list = list()
         for index in range(threads):
-            thread_list.append(ProxyCheck(self.queue, self.proxy_item))
+            thread_list.append(ProxyCheck(self.queue, self.proxy_item, self.check_urls))
 
         for thread in thread_list:
             thread.daemon = True
@@ -54,7 +55,7 @@ class ProxyValidSchedule(ProxyManager, object):
         while True:
             if not self.queue.empty():
                 self.log.info("Start valid useful proxy")
-                self.__validProxy()
+                self.__valid_useful_Proxy()
             else:
                 self.log.info('Valid Complete! sleep 5 sec.')
                 time.sleep(5)

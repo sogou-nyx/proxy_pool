@@ -80,8 +80,8 @@ class DbClient(object):
     def get(self, key, **kwargs):
         return self.client.get(key, **kwargs)
 
-    def put(self, key, **kwargs):
-        return self.client.put(key, **kwargs)
+    def put(self, key, meta):
+        return self.client.put(key, meta)
 
     def update(self, key, value, **kwargs):
         return self.client.update(key, value, **kwargs)

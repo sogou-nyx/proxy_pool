@@ -13,6 +13,7 @@
                    2017/09/27: 修改pop()方法 返回{proxy:value}字典
 -------------------------------------------------
 """
+
 __author__ = 'JHao'
 
 from Util import EnvUtil
@@ -56,14 +57,13 @@ class SsdbClient(object):
         else:
             return None
 
-    def put(self, proxy, num=1):
+    def put(self, proxy, meta):
         """
         将代理放入hash, 使用changeTable指定hash name
         :param proxy:
-        :param num:
         :return:
         """
-        data = self.__conn.hset(self.name, proxy, num)
+        data = self.__conn.hset(self.name, proxy, meta)
         return data
 
     def delete(self, key):

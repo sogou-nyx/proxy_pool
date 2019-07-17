@@ -22,7 +22,7 @@ class ConfigError(BaseException):
 DB_TYPE = getenv('db_type', 'SSDB')
 
 if DB_TYPE == 'SSDB':
-    DB_HOST = getenv('ssdb_host', '127.0.0.1')
+    DB_HOST = getenv('ssdb_host', '10.143.55.90')
     DB_PORT = getenv('ssdb_port', '6379')
     DB_PASSWORD = getenv('ssdb_password', '')
 elif DB_TYPE == 'MONGODB':
@@ -34,9 +34,9 @@ else:
 
 DATABASES = {
     "default": {
-        "TYPE": DB_TYPE,  # TYPE SSDB/MONGODB if use redis, only modify the host port, the type should be SSDB
-        "HOST": DB_HOST,
-        "PORT": DB_PORT,
+        "TYPE": "SSDB",  # TYPE SSDB/MONGODB if use redis, only modify the host port, the type should be SSDB
+        "HOST": "10.143.55.90",
+        "PORT": "6379",
         "NAME": "proxy",
         "PASSWORD": DB_PASSWORD
 
@@ -70,3 +70,11 @@ SERVER_API = {
     "HOST": "0.0.0.0",  # The ip specified which starting the web API
     "PORT": 5010  # port number to which the server listens to
 }
+
+CHECK_URLS = [
+    'https://www.sohu.com/',
+    'https://www.sina.com.cn/',
+    'https://www.taobao.com/',
+    'https://www.baidu.com/',
+    'https://www.qq.com/',
+]

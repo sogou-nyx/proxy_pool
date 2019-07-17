@@ -58,6 +58,10 @@ class ConfigGetter(object):
         return SERVER_API.get("PORT", 5010)
 
 
+    @LazyProperty
+    def check_urls(self):
+        return CHECK_URLS
+
 config = ConfigGetter()
 
 if __name__ == '__main__':

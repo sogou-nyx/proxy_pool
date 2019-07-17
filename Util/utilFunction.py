@@ -11,15 +11,18 @@
                    2016/11/25: 添加robustCrawl、verifyProxy、getHtmlTree
 -------------------------------------------------
 """
+import random
+
 import requests
 import time
-from lxml import etree
-
+import lxml
+from lxml import html
 from Util.LogHandler import LogHandler
 from Util.WebRequest import WebRequest
+from Config.ConfigGetter import config
 
-# logger = LogHandler(__name__, stream=False)
-
+# logger = LogHandler(__name__)
+etree = lxml.html.etree
 
 # noinspection PyPep8Naming
 def robustCrawl(func):
@@ -69,7 +72,6 @@ def getHtmlTree(url, **kwargs):
 
     # delay 2s for per request
     time.sleep(2)
-
     html = wr.get(url=url, header=header).content
     return etree.HTML(html)
 
@@ -88,21 +90,53 @@ def tcpConnect(proxy):
 
 
 # noinspection PyPep8Naming
+# def validUsefulProxy(proxy):
+#     """
+#     检验代理是否可用
+#     :param proxy:
+#     :return:
+#     """
+#     logger = LogHandler("validUsefulProxy")
+#     if isinstance(proxy, bytes):
+#         proxy = proxy.decode('utf8')
+#     proxies = {"http": "http://{proxy}".format(proxy=proxy)}
+#     try:
+#         # 超过20秒的代理就不要了
+#         r = requests.get('http://httpbin.org/ip', proxies=proxies, timeout=5, verify=False)
+#         if r.status_code == 200 and r.json().get("origin"):
+#             logger.info('%s is ok' % proxy)
+#             return True
+#     except Exception as e:
+#         logger.error(str(e))
+#         return False
+
+# noinspection PyPep8Naming
 def validUsefulProxy(proxy):
     """
     检验代理是否可用
     :param proxy:
     :return:
     """
+    logger = LogHandler("validUsefulProxy")
     if isinstance(proxy, bytes):
         proxy = proxy.decode('utf8')
-    proxies = {"http": "http://{proxy}".format(proxy=proxy)}
-    try:
-        # 超过20秒的代理就不要了
-        r = requests.get('http://httpbin.org/ip', proxies=proxies, timeout=10, verify=False)
-        if r.status_code == 200 and r.json().get("origin"):
-            # logger.info('%s is ok' % proxy)
-            return True
-    except Exception as e:
-        # logger.error(str(e))
-        return False
+    proxies = {"https": f"https://{proxy}"}
+    check_urls = config.check_urls
+    length = len(check_urls)
+    start = index = random.randint(0, length - 1)
+    flag = True
+    while flag or index != start:
+        flag = False
+        url = check_urls[index]
+        index = (index + 1) % length
+        logger.info(f'proxy {proxy} check {url}')
+        try:
+            r = requests.get(url, proxies=proxies, timeout=5, verify=False)
+            if r.status_code == 200:
+                logger.info(f'proxy {proxy} is useful')
+                return True
+        except Exception as e:
+            logger.error(f'proxy {proxy} check {url} failed, {e}')
+        time.sleep(1)
+    logger.error(f'proxy {proxy} all check failed')
+    return False
